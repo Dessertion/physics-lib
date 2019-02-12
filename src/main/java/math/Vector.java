@@ -1,71 +1,156 @@
 package math;
 
-import java.util.ArrayList;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Dessertion
  */
-public class Vector<T extends Number> {
+public class Vector{
+	private double[] arr;
+	private int sz;
 	
-	private final int          dim;
-	private final ArrayList<T> arr;
-	
-	/**
-	 * Creates a vector with a given dimension and initializes all components to 0
-	 * @param dimensions The dimensions of the vector
-	 */
-	public Vector(int dimensions) {
-		this.dim = dimensions;
-		arr = new ArrayList<>(dimensions);
-		for (int i = 0; i < dimensions; i++) arr.add((T) (Number) (0));
+	public Vector(int size){
+		sz=size;
+		arr = new double[sz];
 	}
 	
-	/**
-	 * Default constructor; creates a 3-dimensional vector
-	 */
-	public Vector() {
+	public Vector(){
 		this(3);
 	}
 	
-	/**
-	 * Creates a vector with the given array
-	 * @param a The array to be turned into a vector
-	 * @param <S> The type of the vector
-	 */
-	public <S extends Number> Vector(S[] a){
-		dim = a.length;
-		arr = new ArrayList<>(dim);
-		for(int i = 0 ; i< dim; i++)arr.add((T)a[i]);
+	public Vector(double...v){
+		arr = v.clone();
+		sz = v.length;
 	}
 	
-	/**
-	 * Get the value of the element at this index
-	 * @param idx The index of the element
-	 * @return The value of the element at the index
-	 */
-	public T get(int idx){
-		return arr.get(idx);
+	public Vector(Vector v){
+		arr = v.toArray();
+		sz = v.getSize();
 	}
 	
-	/**
-	 * Sets the value of this index to another value
-	 * @param idx The index to be changed
-	 * @param u The value to set the index to
-	 * @return The altered vector
-	 */
-	public Vector set(int idx, T u){
-		arr.set(idx,u);
+	public Vector(double size, double val){
+		this(size);
+		for(var i : arr)i=val;
+	}
+	
+	public List<Double> toList(){
+		return Arrays.stream(arr).parallel().boxed().collect(Collectors.toList());
+	}
+	
+	public double[] toArray(){
+		return arr;
+	}
+	
+	public Double[] toBoxedArray(){
+		return (Double[])Arrays.stream(arr).parallel().boxed().toArray();
+	}
+	
+	public int getSize(){
+		return sz;
+	}
+	
+	private void check3D(Vector v) throws InvalidVectorDimensionsException {
+		if(sz!=3)throw new InvalidVectorDimensionsException(sz,3);
+		if(v.sz!=3)throw new InvalidVectorDimensionsException(v.sz,3);
+	}
+	
+	public double lengthSquared(){
+		return Arrays.stream(arr).parallel().map(x->x*x).sum();
+	}
+	
+	public double length(){
+		return Math.sqrt(lengthSquared());
+	}
+	
+	public Vector add(Vector v) throws VectorDimensionMismatchException {
+		if(v.sz!=sz)throw new VectorDimensionMismatchException(this,v);
+		for(int i = 0 ; i<sz; i++)arr[i]+=v.arr[i];
 		return this;
 	}
 	
-	public <S> Vector add(Vector v) throws Exception {
-		if(dim!=v.dim)throw new VectorDimensionMismatchException(this,v);
-		for(int i = 0 ; i < dim; i++)arr.get(dim)+=(T)(Number)(v.get(i));
+	public Vector add(double...v) throws VectorDimensionMismatchException {
+		return add(new Vector(v));
 	}
 	
-	
-	public int getDimension() {
-		return dim;
+	public Vector sub(Vector v) throws VectorDimensionMismatchException {
+		if(v.sz!=sz)throw new VectorDimensionMismatchException(this,v);
+		for(int i = 0 ; i < sz; i++)arr[i]-=v.arr[i];
+		return this;
 	}
+	
+	public Vector sub(double...v) throws VectorDimensionMismatchException {
+		return sub(new Vector(v));
+	}
+	
+	public Vector mul(double scalar){
+		arr = Arrays.stream(arr).parallel().map(x->x*scalar).toArray();
+		return this;
+	}
+	
+	public Vector div(double scalar){
+		arr = Arrays.stream(arr).parallel().map(x->x/scalar).toArray();
+		return this;
+	}
+	
+	public Vector mulEach(Vector v) throws VectorDimensionMismatchException {
+		if(sz!=v.sz)throw new VectorDimensionMismatchException(this,v);
+		for(int i = 0 ; i < sz; i ++)arr[i]*=v.arr[i];
+		return this;
+	}
+	
+	public Vector mulEach(double...v)throws VectorDimensionMismatchException{
+		return mulEach(new Vector(v));
+	}
+	
+	public Vector divEach(Vector v) throws VectorDimensionMismatchException{
+		if(sz!=v.sz)throw new VectorDimensionMismatchException(this,v);
+		for(int i = 0; i<sz; i++)arr[i]/=v.arr[i];
+		return this;
+	}
+	
+	public Vector divEach(double...v)throws VectorDimensionMismatchException{
+		return divEach(new Vector(v));
+	}
+	
+	public double dot(Vector v) throws VectorDimensionMismatchException {
+		if(v.sz!=sz)throw new VectorDimensionMismatchException(this,v);
+		double ret = 0;
+		for (int i = 0; i < sz; i++) ret+=arr[i]*v.arr[i];
+		return ret;
+	}
+	
+	public double dot(double...v)throws VectorDimensionMismatchException{
+		return dot(new Vector(v));
+	}
+	
+	public static double dot(Vector u, Vector v) throws VectorDimensionMismatchException {
+		return u.dot(v);
+	}
+	
+	public Vector cross(Vector v) throws InvalidVectorDimensionsException {
+		if(sz!=3)throw new InvalidVectorDimensionsException(sz,3);
+		if(v.sz!=3)throw new InvalidVectorDimensionsException(v.sz,3);
+		return new Vector(arr[1]*v.arr[2]-arr[2]*v.arr[1],arr[2]*v.arr[0]-arr[0]*v.arr[2],arr[0]*v.arr[1]-arr[1]*v.arr[0]);
+	}
+	
+	public Vector cross(double...v) throws InvalidVectorDimensionsException {
+		return cross(new Vector(v));
+	}
+	
+	public static Vector cross(Vector u, Vector v)throws InvalidVectorDimensionsException{
+		return u.cross(v);
+	}
+	
+	public Vector normalize(){
+		double len = length();
+		return div(len);
+	}
+	
+	public Vector zero(){
+		arr = Arrays.stream(arr).parallel().map(x->0).toArray();
+		return this;
+	}
+	
 }
 
